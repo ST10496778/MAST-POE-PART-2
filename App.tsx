@@ -129,10 +129,10 @@ export default function App() {
 
     const newDish: MenuItem = {
       id: Date.now().toString(),
-      name: dishName.trim(),
-      description: dishDescription.trim(),
+      name: dishName,
+      description: dishDescription,
       course: selectedCourse,
-      price: parseFloat(dishPrice),
+      price: price,
     };
 
     setMenuItems([...menuItems, newDish]);
