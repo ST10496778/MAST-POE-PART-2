@@ -39,7 +39,6 @@ const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrde
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
-  const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
   
   // Pre-added dishes and drinks
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
@@ -127,6 +126,9 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<Course>('Starters');
   const [dishPrice, setDishPrice] = useState('');
 
+  // Course options
+  const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
+
   const handleAddDish = () => {
     if (!dishName.trim()) {
       Alert.alert('Error', 'Please enter a dish name');
@@ -163,58 +165,26 @@ export default function App() {
     setCurrentScreen('home');
   };
 
-  const handleAddToOrder = (item: MenuItem) => {
-    setOrderItems([...orderItems, item]);
-    Alert.alert('Added! ✅', `${item.name} added to your order!`);
-  };
-
   const handleAddAllToOrder = () => {
     if (menuItems.length === 0) {
       Alert.alert('Oops!', 'No menu items to add.');
       return;
     }
-    setOrderItems([...orderItems, ...menuItems]);
     Alert.alert('Awesome! 🎊', `All ${menuItems.length} delicious items added to your order!`);
-  };
-
-  const handleClearOrder = () => {
-    if (orderItems.length === 0) {
-      Alert.alert('Info', 'Your order is already empty.');
-      return;
-    }
-    Alert.alert(
-      'Clear Order',
-      'Are you sure you want to clear your entire order?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => {
-            setOrderItems([]);
-            Alert.alert('Cleared', 'Your order has been cleared.');
-          }
-        },
-      ]
-    );
   };
 
   const getTotalMenuItems = () => {
     return menuItems.length;
   };
 
-  const getOrderTotal = () => {
-    return orderItems.reduce((total, item) => total + item.price, 0);
-  };
-
   const getItemsByCourse = (course: Course) => {
     return menuItems.filter(item => item.course === course);
   };
 
-  // Home Screen 
+  // Home Screen Component
   const HomeScreen = () => (
     <View style={styles.screen}>
-      {/* Header */}
+      {/* Cute Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🍽️</Text>
@@ -224,18 +194,6 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {/* Order Summary */}
-        {orderItems.length > 0 && (
-          <View style={styles.orderSummary}>
-            <Text style={styles.orderSummaryText}>
-              🛒 Order: {orderItems.length} items | Total: R{getOrderTotal().toFixed(2)}
-            </Text>
-            <TouchableOpacity style={styles.clearOrderButton} onPress={handleClearOrder}>
-              <Text style={styles.clearOrderText}>🗑️ Clear</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Total Items Card */}
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>🎯 Total Menu Items: {getTotalMenuItems()}</Text>
@@ -256,7 +214,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍤 STARTERS</Text>
               {getItemsByCourse('Starters').map((item) => (
-                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+                <MenuItem key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -266,7 +224,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍖 MAIN DISHES</Text>
               {getItemsByCourse('Main Dishes').map((item) => (
-                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+                <MenuItem key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -276,7 +234,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍰 DESSERTS</Text>
               {getItemsByCourse('Desserts').map((item) => (
-                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+                <MenuItem key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -286,14 +244,14 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🥤 BEVERAGES</Text>
               {getItemsByCourse('Beverages').map((item) => (
-                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+                <MenuItem key={item.id} item={item} />
               ))}
             </View>
           )}
         </ScrollView>
       </View>
 
-      {/* Footer */}
+      {/* Cute Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
@@ -305,10 +263,40 @@ export default function App() {
     </View>
   );
 
-  // Add Dish Screen 
+  // Menu Item Component
+  const MenuItem = ({ item }: { item: MenuItem }) => (
+    <View style={styles.menuItem}>
+      <View style={styles.dishHeader}>
+        <Text style={styles.dishName}>{item.name}</Text>
+        <View style={[
+          styles.coursePill,
+          item.course === 'Starters' && styles.starterPill,
+          item.course === 'Main Dishes' && styles.mainPill,
+          item.course === 'Desserts' && styles.dessertPill,
+          item.course === 'Beverages' && styles.beveragePill,
+        ]}>
+          <Text style={styles.coursePillText}>
+            {item.course === 'Starters' && '🍤'}
+            {item.course === 'Main Dishes' && '🍖'}
+            {item.course === 'Desserts' && '🍰'}
+            {item.course === 'Beverages' && '🥤'}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.dishDescription}>{item.description}</Text>
+      <View style={styles.itemFooter}>
+        <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
+        <TouchableOpacity style={styles.addButton}>
+          <Text style={styles.addButtonText}>➕ Add</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Add Dish Screen Component
   const AddDishScreen = () => (
     <View style={styles.screen}>
-      {/* Header */}
+      {/* Cute Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>👨‍🍳</Text>
@@ -318,10 +306,7 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        <ScrollView 
-          style={styles.formContainer} 
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.inputCard}>
             <Text style={styles.label}>🍴 Dish Name</Text>
             <TextInput
@@ -330,7 +315,6 @@ export default function App() {
               placeholderTextColor="#A8A8A8"
               value={dishName}
               onChangeText={setDishName}
-              returnKeyType="next"
             />
           </View>
 
@@ -343,8 +327,7 @@ export default function App() {
               value={dishDescription}
               onChangeText={setDishDescription}
               multiline
-              numberOfLines={4}
-              textAlignVertical="top"
+              numberOfLines={3}
             />
           </View>
 
@@ -380,7 +363,6 @@ export default function App() {
               value={dishPrice}
               onChangeText={setDishPrice}
               keyboardType="decimal-pad"
-              returnKeyType="done"
             />
           </View>
 
@@ -402,7 +384,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Footer */}
+      {/* Cute Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
@@ -469,32 +451,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-  },
-  orderSummary: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  orderSummaryText: {
-    color: '#8B4513',
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  clearOrderButton: {
-    backgroundColor: 'rgba(139, 0, 0, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  clearOrderText: {
-    color: '#8B0000',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   totalContainer: {
     backgroundColor: '#A6E3E9',
@@ -584,6 +540,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 10,
   },
+  starterPill: {
+    backgroundColor: '#FFB6C1',
+  },
+  mainPill: {
+    backgroundColor: '#FFD700',
+  },
+  dessertPill: {
+    backgroundColor: '#DDA0DD',
+  },
+  beveragePill: {
+    backgroundColor: '#87CEEB',
+  },
   coursePillText: {
     fontSize: 16,
   },
@@ -644,7 +612,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   textArea: {
-    height: 120,
+    height: 100,
     textAlignVertical: 'top',
   },
   courseContainer: {
