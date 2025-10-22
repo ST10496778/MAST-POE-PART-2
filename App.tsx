@@ -19,7 +19,7 @@ const courseEmojis = { 'Starters': '🍤', 'Main Dishes': '🍖', 'Desserts': '�
 const courseColors = { 'Starters': '#FFB6C1', 'Main Dishes': '#FFD700', 'Desserts': '#DDA0DD', 'Beverages': '#87CEEB' };
 
 // Menu Item Component - MOVED OUTSIDE MAIN COMPONENT
-const MenuItemComponent = ({ item }: { item: MenuItem }) => (
+const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrder: (item: MenuItem) => void }) => (
   <View style={styles.menuItem}>
     <View style={styles.dishHeader}>
       <Text style={styles.dishName}>{item.name}</Text>
@@ -30,8 +30,8 @@ const MenuItemComponent = ({ item }: { item: MenuItem }) => (
     <Text style={styles.dishDescription}>{item.description}</Text>
     <View style={styles.itemFooter}>
       <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-      <TouchableOpacity style={styles.addButton}>
-        <Text style={styles.addButtonText}>➕ Add</Text>
+      <TouchableOpacity style={styles.addButton} onPress={() => onAddToOrder(item)}>
+        <Text style={styles.addButtonText}>➕ Add to Order</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -39,6 +39,7 @@ const MenuItemComponent = ({ item }: { item: MenuItem }) => (
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
+  const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
   
   // Pre-added dishes and drinks
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
@@ -162,16 +163,48 @@ export default function App() {
     setCurrentScreen('home');
   };
 
+  const handleAddToOrder = (item: MenuItem) => {
+    setOrderItems([...orderItems, item]);
+    Alert.alert('Added! ✅', `${item.name} added to your order!`);
+  };
+
   const handleAddAllToOrder = () => {
     if (menuItems.length === 0) {
       Alert.alert('Oops!', 'No menu items to add.');
       return;
     }
+    setOrderItems([...orderItems, ...menuItems]);
     Alert.alert('Awesome! 🎊', `All ${menuItems.length} delicious items added to your order!`);
+  };
+
+  const handleClearOrder = () => {
+    if (orderItems.length === 0) {
+      Alert.alert('Info', 'Your order is already empty.');
+      return;
+    }
+    Alert.alert(
+      'Clear Order',
+      'Are you sure you want to clear your entire order?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Clear', 
+          style: 'destructive',
+          onPress: () => {
+            setOrderItems([]);
+            Alert.alert('Cleared', 'Your order has been cleared.');
+          }
+        },
+      ]
+    );
   };
 
   const getTotalMenuItems = () => {
     return menuItems.length;
+  };
+
+  const getOrderTotal = () => {
+    return orderItems.reduce((total, item) => total + item.price, 0);
   };
 
   const getItemsByCourse = (course: Course) => {
@@ -191,6 +224,18 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
+        {/* Order Summary */}
+        {orderItems.length > 0 && (
+          <View style={styles.orderSummary}>
+            <Text style={styles.orderSummaryText}>
+              🛒 Order: {orderItems.length} items | Total: R{getOrderTotal().toFixed(2)}
+            </Text>
+            <TouchableOpacity style={styles.clearOrderButton} onPress={handleClearOrder}>
+              <Text style={styles.clearOrderText}>🗑️ Clear</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Total Items Card */}
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>🎯 Total Menu Items: {getTotalMenuItems()}</Text>
@@ -211,7 +256,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍤 STARTERS</Text>
               {getItemsByCourse('Starters').map((item) => (
-                <MenuItemComponent key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
               ))}
             </View>
           )}
@@ -221,7 +266,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍖 MAIN DISHES</Text>
               {getItemsByCourse('Main Dishes').map((item) => (
-                <MenuItemComponent key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
               ))}
             </View>
           )}
@@ -231,7 +276,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍰 DESSERTS</Text>
               {getItemsByCourse('Desserts').map((item) => (
-                <MenuItemComponent key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
               ))}
             </View>
           )}
@@ -241,7 +286,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🥤 BEVERAGES</Text>
               {getItemsByCourse('Beverages').map((item) => (
-                <MenuItemComponent key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
               ))}
             </View>
           )}
@@ -276,7 +321,6 @@ export default function App() {
         <ScrollView 
           style={styles.formContainer} 
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" // ADDED THIS LINE
         >
           <View style={styles.inputCard}>
             <Text style={styles.label}>🍴 Dish Name</Text>
@@ -286,6 +330,7 @@ export default function App() {
               placeholderTextColor="#A8A8A8"
               value={dishName}
               onChangeText={setDishName}
+              returnKeyType="next"
             />
           </View>
 
@@ -298,7 +343,8 @@ export default function App() {
               value={dishDescription}
               onChangeText={setDishDescription}
               multiline
-              numberOfLines={3}
+              numberOfLines={4}
+              textAlignVertical="top"
             />
           </View>
 
@@ -334,6 +380,7 @@ export default function App() {
               value={dishPrice}
               onChangeText={setDishPrice}
               keyboardType="decimal-pad"
+              returnKeyType="done"
             />
           </View>
 
@@ -374,7 +421,7 @@ export default function App() {
     </View>
   );
 }
-    //STYLE SHEET 
+
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -422,6 +469,32 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+  orderSummary: {
+    backgroundColor: '#FFD700',
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  orderSummaryText: {
+    color: '#8B4513',
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  clearOrderButton: {
+    backgroundColor: 'rgba(139, 0, 0, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  clearOrderText: {
+    color: '#8B0000',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   totalContainer: {
     backgroundColor: '#A6E3E9',
@@ -511,18 +584,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 10,
   },
-  starterPill: {
-    backgroundColor: '#FFB6C1',
-  },
-  mainPill: {
-    backgroundColor: '#FFD700',
-  },
-  dessertPill: {
-    backgroundColor: '#DDA0DD',
-  },
-  beveragePill: {
-    backgroundColor: '#87CEEB',
-  },
   coursePillText: {
     fontSize: 16,
   },
@@ -583,7 +644,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   textArea: {
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
   },
   courseContainer: {
