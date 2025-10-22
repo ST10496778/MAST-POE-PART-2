@@ -13,18 +13,18 @@ interface MenuItem {
   price: number;
 }
 
-// Course data
-const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
-const courseEmojis = { 'Starters': '🍤', 'Main Dishes': '🍖', 'Desserts': '🍰', 'Beverages': '🥤' };
-const courseColors = { 'Starters': '#FFB6C1', 'Main Dishes': '#FFD700', 'Desserts': '#DDA0DD', 'Beverages': '#87CEEB' };
-
-// Menu Item Component 
+// FIX: Move MenuItemComponent OUTSIDE the App function
 const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrder: (item: MenuItem) => void }) => (
   <View style={styles.menuItem}>
     <View style={styles.dishHeader}>
       <Text style={styles.dishName}>{item.name}</Text>
-      <View style={[styles.coursePill, { backgroundColor: courseColors[item.course] }]}>
-        <Text style={styles.coursePillText}>{courseEmojis[item.course]}</Text>
+      <View style={styles.coursePill}>
+        <Text style={styles.coursePillText}>
+          {item.course === 'Starters' && '🍤'}
+          {item.course === 'Main Dishes' && '🍖'}
+          {item.course === 'Desserts' && '🍰'}
+          {item.course === 'Beverages' && '🥤'}
+        </Text>
       </View>
     </View>
     <Text style={styles.dishDescription}>{item.description}</Text>
@@ -39,6 +39,7 @@ const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrde
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
+  const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
   
   // Pre-added dishes and drinks
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
@@ -73,8 +74,6 @@ export default function App() {
       course: 'Main Dishes',
       price: 135.00,
     },
-    
-    // DESSERTS
     {
       id: '5',
       name: 'VANILLA ICE CREAM NOUGAT',
@@ -82,8 +81,6 @@ export default function App() {
       course: 'Desserts',
       price: 65.00,
     },
-    
-    // BEVERAGES
     {
       id: '6',
       name: 'BERRY BLAST SMOOTHIE',
@@ -105,20 +102,6 @@ export default function App() {
       course: 'Beverages',
       price: 35.00,
     },
-    {
-      id: '9',
-      name: 'ICED CARAMEL LATTE',
-      description: 'Espresso with caramel and cold milk',
-      course: 'Beverages',
-      price: 50.00,
-    },
-    {
-      id: '10',
-      name: 'MOCHA MADNESS',
-      description: 'Chocolate and coffee perfection',
-      course: 'Beverages',
-      price: 55.00,
-    }
   ]);
 
   const [dishName, setDishName] = useState('');
@@ -126,7 +109,6 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<Course>('Starters');
   const [dishPrice, setDishPrice] = useState('');
 
-  // Course options
   const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
 
   const handleAddDish = () => {
@@ -154,15 +136,17 @@ export default function App() {
     };
 
     setMenuItems([...menuItems, newDish]);
-    
-    // Reset form
     setDishName('');
     setDishDescription('');
     setSelectedCourse('Starters');
     setDishPrice('');
-    
-    Alert.alert('Yay! 🎉', 'Dish added successfully!');
+    Alert.alert('Success!', 'Dish added successfully!');
     setCurrentScreen('home');
+  };
+
+  const handleAddToOrder = (item: MenuItem) => {
+    setOrderItems([...orderItems, item]);
+    Alert.alert('Added!', `${item.name} added to your order!`);
   };
 
   const handleAddAllToOrder = () => {
@@ -170,21 +154,16 @@ export default function App() {
       Alert.alert('Oops!', 'No menu items to add.');
       return;
     }
-    Alert.alert('Awesome! 🎊', `All ${menuItems.length} delicious items added to your order!`);
+    setOrderItems([...orderItems, ...menuItems]);
+    Alert.alert('Awesome!', `All ${menuItems.length} items added to your order!`);
   };
 
-  const getTotalMenuItems = () => {
-    return menuItems.length;
-  };
+  const getTotalMenuItems = () => menuItems.length;
+  const getOrderTotal = () => orderItems.reduce((total, item) => total + item.price, 0);
 
-  const getItemsByCourse = (course: Course) => {
-    return menuItems.filter(item => item.course === course);
-  };
-
-  // Home Screen Component
+  // Home Screen
   const HomeScreen = () => (
     <View style={styles.screen}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🍽️</Text>
@@ -194,109 +173,40 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {/* Total Items Card */}
+        {orderItems.length > 0 && (
+          <View style={styles.orderSummary}>
+            <Text style={styles.orderSummaryText}>
+              🛒 Order: {orderItems.length} items | Total: R{getOrderTotal().toFixed(2)}
+            </Text>
+          </View>
+        )}
+
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>🎯 Total Menu Items: {getTotalMenuItems()}</Text>
-          <Text style={styles.totalSubtext}>So many tasty choices! 🍴</Text>
         </View>
 
-        {/* Add All Button */}
-        <TouchableOpacity 
-          style={styles.addAllButton}
-          onPress={handleAddAllToOrder}
-        >
+        <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllToOrder}>
           <Text style={styles.addAllButtonText}>🛒 Add All to Order</Text>
         </TouchableOpacity>
 
         <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
-          {/* Starters Section */}
-          {getItemsByCourse('Starters').length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🍤 STARTERS</Text>
-              {getItemsByCourse('Starters').map((item) => (
-                <MenuItem key={item.id} item={item} />
-              ))}
-            </View>
-          )}
-
-          {/* Main Dishes Section */}
-          {getItemsByCourse('Main Dishes').length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🍖 MAIN DISHES</Text>
-              {getItemsByCourse('Main Dishes').map((item) => (
-                <MenuItem key={item.id} item={item} />
-              ))}
-            </View>
-          )}
-
-          {/* Desserts Section */}
-          {getItemsByCourse('Desserts').length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🍰 DESSERTS</Text>
-              {getItemsByCourse('Desserts').map((item) => (
-                <MenuItem key={item.id} item={item} />
-              ))}
-            </View>
-          )}
-
-          {/* Beverages Section */}
-          {getItemsByCourse('Beverages').length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🥤 BEVERAGES</Text>
-              {getItemsByCourse('Beverages').map((item) => (
-                <MenuItem key={item.id} item={item} />
-              ))}
-            </View>
-          )}
+          {menuItems.map((item) => (
+            <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+          ))}
         </ScrollView>
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.footerButton}
-          onPress={() => setCurrentScreen('addDish')}
-        >
+        <TouchableOpacity style={styles.footerButton} onPress={() => setCurrentScreen('addDish')}>
           <Text style={styles.footerButtonText}>✨ Add New Dish</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
-  // Menu Item Component
-  const MenuItem = ({ item }: { item: MenuItem }) => (
-    <View style={styles.menuItem}>
-      <View style={styles.dishHeader}>
-        <Text style={styles.dishName}>{item.name}</Text>
-        <View style={[
-          styles.coursePill,
-          item.course === 'Starters' && styles.starterPill,
-          item.course === 'Main Dishes' && styles.mainPill,
-          item.course === 'Desserts' && styles.dessertPill,
-          item.course === 'Beverages' && styles.beveragePill,
-        ]}>
-          <Text style={styles.coursePillText}>
-            {item.course === 'Starters' && '🍤'}
-            {item.course === 'Main Dishes' && '🍖'}
-            {item.course === 'Desserts' && '🍰'}
-            {item.course === 'Beverages' && '🥤'}
-          </Text>
-        </View>
-      </View>
-      <Text style={styles.dishDescription}>{item.description}</Text>
-      <View style={styles.itemFooter}>
-        <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>➕ Add</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  // Add Dish Screen Component
+  // Add Dish Screen
   const AddDishScreen = () => (
     <View style={styles.screen}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>👨‍🍳</Text>
@@ -327,7 +237,8 @@ export default function App() {
               value={dishDescription}
               onChangeText={setDishDescription}
               multiline
-              numberOfLines={3}
+              numberOfLines={4}
+              textAlignVertical="top"
             />
           </View>
 
@@ -367,29 +278,19 @@ export default function App() {
           </View>
 
           <View style={styles.buttonGroup}>
-            <TouchableOpacity 
-              style={styles.saveButton}
-              onPress={handleAddDish}
-            >
+            <TouchableOpacity style={styles.saveButton} onPress={handleAddDish}>
               <Text style={styles.saveButtonText}>💾 Save Dish</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={() => setCurrentScreen('home')}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={() => setCurrentScreen('home')}>
               <Text style={styles.cancelButtonText}>❌ Cancel</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.footerButton}
-          onPress={() => setCurrentScreen('home')}
-        >
+        <TouchableOpacity style={styles.footerButton} onPress={() => setCurrentScreen('home')}>
           <Text style={styles.footerButtonText}>🏠 Back to Menu</Text>
         </TouchableOpacity>
       </View>
@@ -418,11 +319,6 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    shadowColor: '#FF85A2',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 10,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -438,9 +334,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   headerSubtitle: {
     fontSize: 16,
@@ -452,28 +345,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  orderSummary: {
+    backgroundColor: '#FFD700',
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 15,
+  },
+  orderSummaryText: {
+    color: '#8B4513',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   totalContainer: {
     backgroundColor: '#A6E3E9',
     padding: 20,
     borderRadius: 20,
     marginBottom: 15,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
   },
   totalText: {
     color: '#2D5D7B',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  totalSubtext: {
-    color: '#2D5D7B',
-    fontSize: 14,
-    opacity: 0.8,
   },
   addAllButton: {
     backgroundColor: '#FFD700',
@@ -481,11 +375,6 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
   },
   addAllButtonText: {
     color: '#8B4513',
@@ -518,7 +407,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
-    borderLeftWidth: 5,
   },
   dishHeader: {
     flexDirection: 'row',
@@ -539,18 +427,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
-  },
-  starterPill: {
     backgroundColor: '#FFB6C1',
-  },
-  mainPill: {
-    backgroundColor: '#FFD700',
-  },
-  dessertPill: {
-    backgroundColor: '#DDA0DD',
-  },
-  beveragePill: {
-    backgroundColor: '#87CEEB',
   },
   coursePillText: {
     fontSize: 16,
@@ -590,11 +467,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
   },
   label: {
     fontSize: 16,
@@ -612,7 +484,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   textArea: {
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
   },
   courseContainer: {
@@ -648,11 +520,6 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#FF85A2',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
   },
   saveButtonText: {
     color: 'white',
@@ -677,11 +544,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    shadowColor: '#FF85A2',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 10,
   },
   footerButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
