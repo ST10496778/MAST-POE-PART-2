@@ -132,7 +132,7 @@ export default function App() {
       name: dishName,
       description: dishDescription,
       course: selectedCourse,
-      price: price,
+      price: parseFloat(dishPrice),
     };
 
     setMenuItems([...menuItems, newDish]);
