@@ -13,12 +13,12 @@ interface MenuItem {
   price: number;
 }
 
-// Course data - MOVED OUTSIDE COMPONENT
+// Course data
 const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
 const courseEmojis = { 'Starters': '🍤', 'Main Dishes': '🍖', 'Desserts': '🍰', 'Beverages': '🥤' };
 const courseColors = { 'Starters': '#FFB6C1', 'Main Dishes': '#FFD700', 'Desserts': '#DDA0DD', 'Beverages': '#87CEEB' };
 
-// Menu Item Component - MOVED OUTSIDE MAIN COMPONENT
+// Menu Item Component 
 const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrder: (item: MenuItem) => void }) => (
   <View style={styles.menuItem}>
     <View style={styles.dishHeader}>
@@ -184,7 +184,7 @@ export default function App() {
   // Home Screen Component
   const HomeScreen = () => (
     <View style={styles.screen}>
-      {/* Cute Header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🍽️</Text>
@@ -251,7 +251,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Cute Footer */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
@@ -296,7 +296,7 @@ export default function App() {
   // Add Dish Screen Component
   const AddDishScreen = () => (
     <View style={styles.screen}>
-      {/* Cute Header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>👨‍🍳</Text>
@@ -384,7 +384,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Cute Footer */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
