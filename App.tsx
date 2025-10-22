@@ -13,7 +13,7 @@ interface MenuItem {
   price: number;
 }
 
-// FIX: Move MenuItemComponent OUTSIDE the App function
+// MenuItem Component 
 const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrder: (item: MenuItem) => void }) => (
   <View style={styles.menuItem}>
     <View style={styles.dishHeader}>
@@ -123,7 +123,7 @@ export default function App() {
     }
 
     if (!dishPrice.trim() || isNaN(parseFloat(dishPrice)) || parseFloat(dishPrice) <= 0) {
-      Alert.alert('Error', 'Please enter a valid price');
+      Alert.alert('Error', 'Please enter a valid price number without any letters');
       return;
     }
 
@@ -413,6 +413,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+
   },
   dishName: {
     fontSize: 18,
