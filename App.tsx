@@ -13,6 +13,30 @@ interface MenuItem {
   price: number;
 }
 
+// Course data - MOVED OUTSIDE COMPONENT
+const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
+const courseEmojis = { 'Starters': '🍤', 'Main Dishes': '🍖', 'Desserts': '🍰', 'Beverages': '🥤' };
+const courseColors = { 'Starters': '#FFB6C1', 'Main Dishes': '#FFD700', 'Desserts': '#DDA0DD', 'Beverages': '#87CEEB' };
+
+// Menu Item Component - MOVED OUTSIDE MAIN COMPONENT
+const MenuItemComponent = ({ item }: { item: MenuItem }) => (
+  <View style={styles.menuItem}>
+    <View style={styles.dishHeader}>
+      <Text style={styles.dishName}>{item.name}</Text>
+      <View style={[styles.coursePill, { backgroundColor: courseColors[item.course] }]}>
+        <Text style={styles.coursePillText}>{courseEmojis[item.course]}</Text>
+      </View>
+    </View>
+    <Text style={styles.dishDescription}>{item.description}</Text>
+    <View style={styles.itemFooter}>
+      <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
+      <TouchableOpacity style={styles.addButton}>
+        <Text style={styles.addButtonText}>➕ Add</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
   
@@ -102,9 +126,6 @@ export default function App() {
   const [selectedCourse, setSelectedCourse] = useState<Course>('Starters');
   const [dishPrice, setDishPrice] = useState('');
 
-  // Course options
-  const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
-
   const handleAddDish = () => {
     if (!dishName.trim()) {
       Alert.alert('Error', 'Please enter a dish name');
@@ -157,10 +178,10 @@ export default function App() {
     return menuItems.filter(item => item.course === course);
   };
 
-  // Home Screen Component
+  // Home Screen 
   const HomeScreen = () => (
     <View style={styles.screen}>
-      {/* Cute Header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🍽️</Text>
@@ -190,7 +211,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍤 STARTERS</Text>
               {getItemsByCourse('Starters').map((item) => (
-                <MenuItem key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -200,7 +221,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍖 MAIN DISHES</Text>
               {getItemsByCourse('Main Dishes').map((item) => (
-                <MenuItem key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -210,7 +231,7 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🍰 DESSERTS</Text>
               {getItemsByCourse('Desserts').map((item) => (
-                <MenuItem key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} />
               ))}
             </View>
           )}
@@ -220,14 +241,14 @@ export default function App() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🥤 BEVERAGES</Text>
               {getItemsByCourse('Beverages').map((item) => (
-                <MenuItem key={item.id} item={item} />
+                <MenuItemComponent key={item.id} item={item} />
               ))}
             </View>
           )}
         </ScrollView>
       </View>
 
-      {/* Cute Footer */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
@@ -239,40 +260,10 @@ export default function App() {
     </View>
   );
 
-  // Menu Item Component
-  const MenuItem = ({ item }: { item: MenuItem }) => (
-    <View style={styles.menuItem}>
-      <View style={styles.dishHeader}>
-        <Text style={styles.dishName}>{item.name}</Text>
-        <View style={[
-          styles.coursePill,
-          item.course === 'Starters' && styles.starterPill,
-          item.course === 'Main Dishes' && styles.mainPill,
-          item.course === 'Desserts' && styles.dessertPill,
-          item.course === 'Beverages' && styles.beveragePill,
-        ]}>
-          <Text style={styles.coursePillText}>
-            {item.course === 'Starters' && '🍤'}
-            {item.course === 'Main Dishes' && '🍖'}
-            {item.course === 'Desserts' && '🍰'}
-            {item.course === 'Beverages' && '🥤'}
-          </Text>
-        </View>
-      </View>
-      <Text style={styles.dishDescription}>{item.description}</Text>
-      <View style={styles.itemFooter}>
-        <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>➕ Add</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  // Add Dish Screen Component
+  // Add Dish Screen 
   const AddDishScreen = () => (
     <View style={styles.screen}>
-      {/* Cute Header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>👨‍🍳</Text>
@@ -282,7 +273,11 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.formContainer} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled" // ADDED THIS LINE
+        >
           <View style={styles.inputCard}>
             <Text style={styles.label}>🍴 Dish Name</Text>
             <TextInput
@@ -360,7 +355,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Cute Footer */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
@@ -379,7 +374,7 @@ export default function App() {
     </View>
   );
 }
-
+    //STYLE SHEET 
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
