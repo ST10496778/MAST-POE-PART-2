@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView, 
-  TextInput, 
-  Alert 
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // Define types
