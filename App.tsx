@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // types
@@ -202,14 +202,39 @@ export default function App() {
   const getTotalMenuItems = () => menuItems.length;
   const getOrderTotal = () => orderItems.reduce((total, item) => total + item.price, 0);
 
+  // Logo Component with Local Image - FIXED VERSION
+  const Logo = () => (
+    <View style={styles.logoContainer}>
+      {/* Main logo image - using require for local image */}
+      <Image 
+        source={require('./assets/logo-for-mast.webp')}
+        style={styles.logoImage}
+        resizeMode="cover"
+        onError={(error) => console.log('Logo image failed to load:', error)}
+      />
+      <Text style={styles.headerTitle}>ChrisCooks</Text>
+    </View>
+  );
+
+  // Chef Logo Component with Local Image - FIXED VERSION
+  const ChefLogo = () => (
+    <View style={styles.logoContainer}>
+      {/* Chef logo image - using require for local image */}
+      <Image 
+        source={require('./assets/logo-for-mast.webp')}
+        style={styles.chefLogoImage}
+        resizeMode="cover"
+        onError={(error) => console.log('Chef logo image failed to load:', error)}
+      />
+      <Text style={styles.headerTitle}>Add New Dish</Text>
+    </View>
+  );
+
   // Home Screen
   const HomeScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🍽️</Text>
-          <Text style={styles.headerTitle}>ChrisCooks</Text>
-        </View>
+        <Logo />
         <Text style={styles.headerSubtitle}>Yummy Delights Await! ✨</Text>
       </View>
 
@@ -269,10 +294,7 @@ export default function App() {
   const AddDishScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>👨‍🍳</Text>
-          <Text style={styles.headerTitle}>Add New Dish</Text>
-        </View>
+        <ChefLogo />
         <Text style={styles.headerSubtitle}>Create something magical! 🌟</Text>
       </View>
 
@@ -397,6 +419,7 @@ export default function App() {
     </View>
   );
 }
+
 // style sheet
 const styles = StyleSheet.create({
   appContainer: {
@@ -419,9 +442,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  logo: {
-    fontSize: 32,
+  logoImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     marginRight: 12,
+    borderWidth: 3,
+    borderColor: 'white',
+    backgroundColor: 'white', // Added background color
+  },
+  chefLogoImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: 'white',
+    backgroundColor: 'white', // Added background color
   },
   headerTitle: {
     fontSize: 28,
