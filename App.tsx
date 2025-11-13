@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-// Define types
+// types
 type Course = 'Starters' | 'Main Dishes' | 'Desserts' | 'Beverages';
 
 interface MenuItem {
