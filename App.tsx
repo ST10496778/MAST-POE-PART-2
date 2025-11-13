@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, SafeAreaView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // types
@@ -55,12 +55,24 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
   </View>
 );
 
+// Logo Component 
+const Logo = ({ size = 'large' }: { size?: 'large' | 'small' }) => (
+  <View style={styles.logoContainer}>
+    <Image 
+      source={require('./assets/logo-for-mast.webp')} 
+      style={size === 'large' ? styles.logoImageLarge : styles.logoImageSmall}
+      resizeMode="contain"
+    />
+    <Text style={size === 'large' ? styles.headerTitle : styles.headerTitleSmall}>ChrisCooks</Text>
+  </View>
+);
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
   const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
   const [activeFilters, setActiveFilters] = useState<Course[]>(['Starters', 'Main Dishes', 'Desserts', 'Beverages']);
   
-  // Pre-added dishes and drinks - FIXED: Ensure all items are properly defined
+  // Pre-added dishes and drinks
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
     {
       id: '1',
@@ -118,6 +130,34 @@ export default function App() {
       course: 'Beverages',
       price: 35.00,
     },
+    {
+      id: '9',
+      name: 'GARLIC PRAWNS',
+      description: 'Succulent prawns in garlic butter sauce',
+      course: 'Starters',
+      price: 95.00,
+    },
+    {
+      id: '10',
+      name: 'LAMB SHANK',
+      description: 'Slow-cooked lamb shank with rosemary and red wine',
+      course: 'Main Dishes',
+      price: 185.00,
+    },
+    {
+      id: '11',
+      name: 'CHOCOLATE LAVA CAKE',
+      description: 'Warm chocolate cake with molten center and vanilla ice cream',
+      course: 'Desserts',
+      price: 75.00,
+    },
+    {
+      id: '12',
+      name: 'ESPRESSO MARTINI',
+      description: 'Premium vodka with fresh espresso and coffee liqueur',
+      course: 'Beverages',
+      price: 65.00,
+    },
   ]);
 
   const [dishName, setDishName] = useState('');
@@ -148,15 +188,10 @@ export default function App() {
     }
   };
 
-  // Filter menu items based on active filters - FIXED: Simple reliable filtering
+  // Filter menu items based on active filters
   const filteredMenuItems = menuItems.filter(item => 
     activeFilters.includes(item.course)
   );
-
-  // Debug: Log the current state to see what's happening
-  console.log('Active Filters:', activeFilters);
-  console.log('Menu Items:', menuItems.length);
-  console.log('Filtered Items:', filteredMenuItems.length);
 
   const handleAddDish = () => {
     if (!dishName.trim()) {
@@ -283,10 +318,7 @@ export default function App() {
   const HomeScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🍽️</Text>
-          <Text style={styles.headerTitle}>ChrisCooks</Text>
-        </View>
+        <Logo size="large" />
         <Text style={styles.headerSubtitle}>Exquisite Dining Experience</Text>
       </View>
 
@@ -333,32 +365,37 @@ export default function App() {
           )}
         </View>
 
-        <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
-          {filteredMenuItems.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No items match your current filters</Text>
-              <Text style={styles.emptyStateSubtext}>
-                {activeFilters.length === 0 
-                  ? 'Select at least one course type to see items' 
-                  : 'Try selecting different course types'
-                }
-              </Text>
-              <TouchableOpacity style={styles.emptyStateButton} onPress={selectAllFilters}>
-                <Text style={styles.emptyStateButtonText}>Show All Items</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            filteredMenuItems.map((item) => (
-              <MenuItemComponent 
-                key={item.id} 
-                item={item} 
-                onAddToOrder={handleAddToOrder}
-                onRemoveFromOrder={handleRemoveFromOrder}
-                isInOrder={isItemInOrder(item.id)}
-              />
-            ))
-          )}
-        </ScrollView>
+        <View style={styles.menuScrollContainer}>
+          <ScrollView 
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {filteredMenuItems.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No items match your current filters</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  {activeFilters.length === 0 
+                    ? 'Select at least one course type to see items' 
+                    : 'Try selecting different course types'
+                  }
+                </Text>
+                <TouchableOpacity style={styles.emptyStateButton} onPress={selectAllFilters}>
+                  <Text style={styles.emptyStateButtonText}>Show All Items</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              filteredMenuItems.map((item) => (
+                <MenuItemComponent 
+                  key={item.id} 
+                  item={item} 
+                  onAddToOrder={handleAddToOrder}
+                  onRemoveFromOrder={handleRemoveFromOrder}
+                  isInOrder={isItemInOrder(item.id)}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -373,15 +410,16 @@ export default function App() {
   const AddDishScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>👨‍🍳</Text>
-          <Text style={styles.headerTitle}>Add New Dish</Text>
-        </View>
+        <Logo size="large" />
         <Text style={styles.headerSubtitle}>Craft Your Culinary Masterpiece</Text>
       </View>
 
       <View style={styles.content}>
-        <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.formContainer} 
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={styles.scrollContent}
+        >
           <View style={styles.quickTips}>
             <Text style={styles.quickTipsTitle}>💡 Quick Tips</Text>
             <Text style={styles.quickTipsText}>• Fill name and price for quick add</Text>
@@ -512,14 +550,14 @@ export default function App() {
   );
 
   return (
-    <View style={styles.appContainer}>
+    <SafeAreaView style={styles.appContainer}>
       <StatusBar style="light" />
       {currentScreen === 'home' ? <HomeScreen /> : <AddDishScreen />}
-    </View>
+    </SafeAreaView>
   );
 }
 
-// style sheet
+// style sheet 
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -530,8 +568,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#0D0D0D',
-    padding: 25,
-    paddingTop: 50,
+    padding: 5,
+    paddingTop: 5,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     shadowColor: '#000',
@@ -548,13 +586,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  logo: {
-    fontSize: 32,
+ 
+  logoImageLarge: {
+    width: 40,
+    height: 40,
     marginRight: 12,
-    color: '#800000',
+  },
+  logoImageSmall: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  headerTitleSmall: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     letterSpacing: 1,
@@ -568,12 +618,18 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 8,
     backgroundColor: '#1A1A1A',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  menuScrollContainer: {
+    flex: 1,
   },
   orderSummary: {
     backgroundColor: '#2D2D2D',
-    padding: 16,
+    padding: 4,
     borderRadius: 12,
     marginBottom: 16,
     alignItems: 'center',
@@ -596,7 +652,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: '#2D2D2D',
-    padding: 16,
+    padding: 20,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
@@ -616,7 +672,7 @@ const styles = StyleSheet.create({
   // Filter Styles
   filterContainer: {
     backgroundColor: '#2D2D2D',
-    padding: 16,
+    padding: 4,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
@@ -640,8 +696,8 @@ const styles = StyleSheet.create({
   filterActionButton: {
     backgroundColor: '#404040',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: '#666',
   },
@@ -660,7 +716,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#404040',
   },
@@ -1019,7 +1075,7 @@ const styles = StyleSheet.create({
   footerButton: {
     backgroundColor: '#2D2D2D',
     borderRadius: 12,
-    padding: 14,
+    padding: 6,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#404040',
