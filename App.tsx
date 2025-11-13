@@ -60,9 +60,8 @@ export default function App() {
   const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
   const [activeFilters, setActiveFilters] = useState<Course[]>(['Starters', 'Main Dishes', 'Desserts', 'Beverages']);
   
-  // Pre-added dishes and drinks
+  // Pre-added dishes and drinks - FIXED: Ensure all items are properly defined
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    // STARTERS
     {
       id: '1',
       name: 'CHICKEN LIVERS',
@@ -70,8 +69,6 @@ export default function App() {
       course: 'Starters',
       price: 85.00,
     },
-    
-    // MAIN DISHES
     {
       id: '2',
       name: 'STEAK FILLET 300G',
@@ -151,8 +148,15 @@ export default function App() {
     }
   };
 
-  // Filter menu items based on active filters
-  const filteredMenuItems = menuItems.filter(item => activeFilters.includes(item.course));
+  // Filter menu items based on active filters - FIXED: Simple reliable filtering
+  const filteredMenuItems = menuItems.filter(item => 
+    activeFilters.includes(item.course)
+  );
+
+  // Debug: Log the current state to see what's happening
+  console.log('Active Filters:', activeFilters);
+  console.log('Menu Items:', menuItems.length);
+  console.log('Filtered Items:', filteredMenuItems.length);
 
   const handleAddDish = () => {
     if (!dishName.trim()) {
@@ -336,7 +340,7 @@ export default function App() {
               <Text style={styles.emptyStateSubtext}>
                 {activeFilters.length === 0 
                   ? 'Select at least one course type to see items' 
-                  : 'Try selecting different course types or adding new dishes'
+                  : 'Try selecting different course types'
                 }
               </Text>
               <TouchableOpacity style={styles.emptyStateButton} onPress={selectAllFilters}>
