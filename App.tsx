@@ -25,7 +25,7 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
       <Text style={styles.dishName}>{item.name}</Text>
       <View style={styles.coursePill}>
         <Text style={styles.coursePillText}>
-          {item.course === 'Starters' && '🍤'}
+          {item.course === 'Starters' && '🥗'}
           {item.course === 'Main Dishes' && '🍖'}
           {item.course === 'Desserts' && '🍰'}
           {item.course === 'Beverages' && '🥤'}
