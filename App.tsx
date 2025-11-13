@@ -25,7 +25,7 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
       <Text style={styles.dishName}>{item.name}</Text>
       <View style={styles.coursePill}>
         <Text style={styles.coursePillText}>
-          {item.course === 'Starters' && '🥗'}
+          {item.course === 'Starters' && '🍤'}
           {item.course === 'Main Dishes' && '🍖'}
           {item.course === 'Desserts' && '🍰'}
           {item.course === 'Beverages' && '🥤'}
@@ -33,9 +33,9 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
       </View>
     </View>
     <Text style={styles.dishDescription}>{item.description}</Text>
-      <View style={styles.itemFooter}>
-        <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-          <View style={styles.buttonContainer}>
+    <View style={styles.itemFooter}>
+      <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
+      <View style={styles.buttonContainer}>
         {isInOrder && (
           <TouchableOpacity 
             style={[styles.actionButton, styles.removeButton]} 
@@ -58,6 +58,7 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'addDish'>('home');
   const [orderItems, setOrderItems] = useState<MenuItem[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Course[]>(['Starters', 'Main Dishes', 'Desserts', 'Beverages']);
   
   // Pre-added dishes and drinks
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
@@ -124,10 +125,33 @@ export default function App() {
 
   const [dishName, setDishName] = useState('');
   const [dishDescription, setDishDescription] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState<Course>('Starters');
+  const [selectedCourse, setSelectedCourse] = useState<Course>('Main Dishes');
   const [dishPrice, setDishPrice] = useState('');
 
   const courses: Course[] = ['Starters', 'Main Dishes', 'Desserts', 'Beverages'];
+
+  // Filtering functions
+  const toggleFilter = (course: Course) => {
+    if (activeFilters.includes(course)) {
+      if (activeFilters.length > 1) {
+        setActiveFilters(activeFilters.filter(filter => filter !== course));
+      }
+    } else {
+      setActiveFilters([...activeFilters, course]);
+    }
+  };
+
+  const selectAllFilters = () => {
+    setActiveFilters(['Starters', 'Main Dishes', 'Desserts', 'Beverages']);
+  };
+
+  const clearAllFilters = () => {
+    if (activeFilters.length > 0) {
+      setActiveFilters([]);
+    }
+  };
+
+  const filteredMenuItems = menuItems.filter(item => activeFilters.includes(item.course));
 
   const handleAddDish = () => {
     if (!dishName.trim()) {
@@ -147,19 +171,33 @@ export default function App() {
 
     const newDish: MenuItem = {
       id: Date.now().toString(),
-      name: dishName,
-      description: dishDescription,
+      name: dishName.trim(),
+      description: dishDescription.trim(),
       course: selectedCourse,
       price: parseFloat(dishPrice),
     };
 
-    setMenuItems([...menuItems, newDish]);
+    setMenuItems([newDish, ...menuItems]); // Add new dish at the top
     setDishName('');
     setDishDescription('');
-    setSelectedCourse('Starters');
+    setSelectedCourse('Main Dishes');
     setDishPrice('');
-    Alert.alert('Success!', 'Dish added successfully!');
+    
+    // Auto-switch to home screen and show success
     setCurrentScreen('home');
+    
+    // Auto-select the filter for the newly added dish
+    setActiveFilters([selectedCourse]);
+    
+    Alert.alert('Success!', `${newDish.name} has been added to the menu!`);
+  };
+
+  const handleQuickAdd = () => {
+    if (dishName.trim() && dishPrice.trim() && !isNaN(parseFloat(dishPrice))) {
+      handleAddDish();
+    } else {
+      Alert.alert('Quick Tip', 'Fill in at least the dish name and price to use quick add!');
+    }
   };
 
   const handleAddToOrder = (item: MenuItem) => {
@@ -187,12 +225,12 @@ export default function App() {
   };
 
   const handleAddAllToOrder = () => {
-    if (menuItems.length === 0) {
+    if (filteredMenuItems.length === 0) {
       Alert.alert('Oops!', 'No menu items to add.');
       return;
     }
-    setOrderItems([...orderItems, ...menuItems]);
-    Alert.alert('Awesome!', `All ${menuItems.length} items added to your order!`);
+    setOrderItems([...orderItems, ...filteredMenuItems]);
+    Alert.alert('Awesome!', `All ${filteredMenuItems.length} items added to your order!`);
   };
 
   const isItemInOrder = (itemId: string) => {
@@ -202,7 +240,7 @@ export default function App() {
   const getTotalMenuItems = () => menuItems.length;
   const getOrderTotal = () => orderItems.reduce((total, item) => total + item.price, 0);
 
-  // Logo Component 
+  // Logo Component with Local Image
   const Logo = () => (
     <View style={styles.logoContainer}>
       <Image 
@@ -215,7 +253,7 @@ export default function App() {
     </View>
   );
 
-  // Chef Logo Component ]
+  // Chef Logo Component with Local Image
   const ChefLogo = () => (
     <View style={styles.logoContainer}>
       <Image 
@@ -225,6 +263,45 @@ export default function App() {
         onError={(error) => console.log('Chef logo image failed to load:', error)}
       />
       <Text style={styles.headerTitle}>Add New Dish</Text>
+    </View>
+  );
+
+  // Filter Component
+  const FilterBar = () => (
+    <View style={styles.filterContainer}>
+      <View style={styles.filterHeader}>
+        <Text style={styles.filterTitle}>Filter by Course:</Text>
+        <View style={styles.filterActions}>
+          <TouchableOpacity style={styles.filterActionButton} onPress={selectAllFilters}>
+            <Text style={styles.filterActionText}>All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterActionButton} onPress={clearAllFilters}>
+            <Text style={styles.filterActionText}>None</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.filterButtons}>
+        {courses.map((course) => (
+          <TouchableOpacity
+            key={course}
+            style={[
+              styles.filterButton,
+              activeFilters.includes(course) && styles.filterButtonActive
+            ]}
+            onPress={() => toggleFilter(course)}
+          >
+            <Text style={[
+              styles.filterButtonText,
+              activeFilters.includes(course) && styles.filterButtonTextActive
+            ]}>
+              {course}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={styles.filterResults}>
+        Showing {filteredMenuItems.length} of {menuItems.length} items
+      </Text>
     </View>
   );
 
@@ -266,9 +343,11 @@ export default function App() {
           </View>
         </View>
 
+        <FilterBar />
+
         <View style={styles.actionButtonsRow}>
           <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllToOrder}>
-            <Text style={styles.addAllButtonText}>📋 Add All to Order</Text>
+            <Text style={styles.addAllButtonText}>📋 Add Filtered Items</Text>
           </TouchableOpacity>
           {orderItems.length > 0 && (
             <TouchableOpacity style={styles.removeAllButtonSmall} onPress={handleRemoveAllFromOrder}>
@@ -278,15 +357,24 @@ export default function App() {
         </View>
 
         <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
-          {menuItems.map((item) => (
-            <MenuItemComponent 
-              key={item.id} 
-              item={item} 
-              onAddToOrder={handleAddToOrder}
-              onRemoveFromOrder={handleRemoveFromOrder}
-              isInOrder={isItemInOrder(item.id)}
-            />
-          ))}
+          {filteredMenuItems.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No items match your filters</Text>
+              <TouchableOpacity style={styles.emptyStateButton} onPress={selectAllFilters}>
+                <Text style={styles.emptyStateButtonText}>Show All Items</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            filteredMenuItems.map((item) => (
+              <MenuItemComponent 
+                key={item.id} 
+                item={item} 
+                onAddToOrder={handleAddToOrder}
+                onRemoveFromOrder={handleRemoveFromOrder}
+                isInOrder={isItemInOrder(item.id)}
+              />
+            ))
+          )}
         </ScrollView>
       </View>
 
@@ -308,11 +396,17 @@ export default function App() {
 
       <View style={styles.content}>
         <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.quickTips}>
+            <Text style={styles.quickTipsTitle}>💡 Quick Tips</Text>
+            <Text style={styles.quickTipsText}>• Fill name and price for quick add</Text>
+            <Text style={styles.quickTipsText}>• Description can be added later</Text>
+          </View>
+
           <View style={styles.inputCard}>
-            <Text style={styles.label}>🍴 Dish Name</Text>
+            <Text style={styles.label}>🍴 Dish Name *</Text>
             <TextInput
               style={styles.input}
-              placeholder="What's this exquisite dish called?"
+              placeholder="Enter dish name (required)"
               placeholderTextColor="#666"
               value={dishName}
               onChangeText={setDishName}
@@ -325,12 +419,12 @@ export default function App() {
             <Text style={styles.label}>📝 Description</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Describe the flavors and ingredients..."
+              placeholder="Describe the flavors and ingredients (optional)"
               placeholderTextColor="#666"
               value={dishDescription}
               onChangeText={setDishDescription}
               multiline
-              numberOfLines={4}
+              numberOfLines={3}
               textAlignVertical="top"
               maxLength={200}
             />
@@ -338,7 +432,7 @@ export default function App() {
           </View>
 
           <View style={styles.inputCard}>
-            <Text style={styles.label}>📋 Course Type</Text>
+            <Text style={styles.label}>📋 Course Type *</Text>
             <View style={styles.courseContainer}>
               {courses.map((course) => (
                 <TouchableOpacity
@@ -361,12 +455,12 @@ export default function App() {
           </View>
 
           <View style={styles.inputCard}>
-            <Text style={styles.label}>💰 Price</Text>
+            <Text style={styles.label}>💰 Price *</Text>
             <View style={styles.priceContainer}>
               <Text style={styles.currencySymbol}>R</Text>
               <TextInput
                 style={[styles.input, styles.priceInput]}
-                placeholder="0.00"
+                placeholder="0.00 (required)"
                 placeholderTextColor="#666"
                 value={dishPrice}
                 onChangeText={setDishPrice}
@@ -381,7 +475,7 @@ export default function App() {
           </View>
 
           <View style={styles.formSummary}>
-            <Text style={styles.formSummaryTitle}>Dish Summary:</Text>
+            <Text style={styles.formSummaryTitle}>Dish Preview:</Text>
             <Text style={styles.formSummaryText}>
               {dishName || 'No name'} • {selectedCourse} • {dishPrice ? `R${parseFloat(dishPrice).toFixed(2)}` : 'No price'}
             </Text>
@@ -390,11 +484,22 @@ export default function App() {
           <View style={styles.buttonGroup}>
             <TouchableOpacity 
               style={[
+                styles.quickAddButton, 
+                (!dishName.trim() || !dishPrice.trim()) && styles.quickAddButtonDisabled
+              ]} 
+              onPress={handleQuickAdd}
+              disabled={!dishName.trim() || !dishPrice.trim()}
+            >
+              <Text style={styles.quickAddButtonText}>⚡ Quick Add</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
                 styles.saveButton, 
-                (!dishName.trim() || !dishDescription.trim() || !dishPrice.trim()) && styles.saveButtonDisabled
+                (!dishName.trim() || !dishPrice.trim()) && styles.saveButtonDisabled
               ]} 
               onPress={handleAddDish}
-              disabled={!dishName.trim() || !dishDescription.trim() || !dishPrice.trim()}
+              disabled={!dishName.trim() || !dishPrice.trim()}
             >
               <Text style={styles.saveButtonText}>💾 Save Dish</Text>
             </TouchableOpacity>
@@ -402,7 +507,7 @@ export default function App() {
             <TouchableOpacity style={styles.cancelButton} onPress={() => {
               setDishName('');
               setDishDescription('');
-              setSelectedCourse('Starters');
+              setSelectedCourse('Main Dishes');
               setDishPrice('');
               setCurrentScreen('home');
             }}>
@@ -428,7 +533,7 @@ export default function App() {
   );
 }
 
-// style sheet - Updated with Professional Black/Grey/Maroon Theme
+// style sheet 
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -512,7 +617,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 16,
     gap: 12,
   },
   statCard: {
@@ -535,10 +640,98 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  // Filter Styles
+  filterContainer: {
+    backgroundColor: '#2D2D2D',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#404040',
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  filterTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  filterActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  filterActionButton: {
+    backgroundColor: '#404040',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#666',
+  },
+  filterActionText: {
+    color: '#CCCCCC',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterButton: {
+    backgroundColor: '#1A1A1A',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#404040',
+  },
+  filterButtonActive: {
+    backgroundColor: '#800000',
+    borderColor: '#A00000',
+  },
+  filterButtonText: {
+    color: '#CCCCCC',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  filterButtonTextActive: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  filterResults: {
+    color: '#888',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    color: '#888',
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  emptyStateButton: {
+    backgroundColor: '#800000',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  emptyStateButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
   actionButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 16,
     gap: 12,
   },
   addAllButton: {
@@ -661,6 +854,25 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
   },
+  quickTips: {
+    backgroundColor: '#2D2D2D',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#404040',
+  },
+  quickTipsTitle: {
+    color: '#800000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  quickTipsText: {
+    color: '#CCCCCC',
+    fontSize: 13,
+    marginBottom: 4,
+  },
   inputCard: {
     backgroundColor: '#2D2D2D',
     borderRadius: 12,
@@ -685,7 +897,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   textArea: {
-    height: 100,
+    height: 80,
     textAlignVertical: 'top',
   },
   charCount: {
@@ -757,6 +969,25 @@ const styles = StyleSheet.create({
   },
   buttonGroup: {
     marginTop: 8,
+  },
+  quickAddButton: {
+    backgroundColor: '#0066CC',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#0088FF',
+  },
+  quickAddButtonDisabled: {
+    backgroundColor: '#004499',
+    borderColor: '#0066CC',
+    opacity: 0.6,
+  },
+  quickAddButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: '#800000',
