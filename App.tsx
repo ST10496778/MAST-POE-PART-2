@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // types
@@ -154,23 +154,9 @@ export default function App() {
   // Filter menu items based on active filters
   const filteredMenuItems = menuItems.filter(item => activeFilters.includes(item.course));
 
-  // Group items by course for better display
-  const groupedMenuItems = filteredMenuItems.reduce((acc, item) => {
-    if (!acc[item.course]) {
-      acc[item.course] = [];
-    }
-    acc[item.course].push(item);
-    return acc;
-  }, {} as Record<Course, MenuItem[]>);
-
   const handleAddDish = () => {
     if (!dishName.trim()) {
       Alert.alert('Error', 'Please enter a dish name');
-      return;
-    }
-
-    if (!dishDescription.trim()) {
-      Alert.alert('Error', 'Please enter a description');
       return;
     }
 
@@ -182,21 +168,18 @@ export default function App() {
     const newDish: MenuItem = {
       id: Date.now().toString(),
       name: dishName.trim(),
-      description: dishDescription.trim(),
+      description: dishDescription.trim() || 'No description provided',
       course: selectedCourse,
       price: parseFloat(dishPrice),
     };
 
-    setMenuItems([newDish, ...menuItems]); // Add new dish at the top
+    setMenuItems([newDish, ...menuItems]);
     setDishName('');
     setDishDescription('');
     setSelectedCourse('Main Dishes');
     setDishPrice('');
     
-    // Auto-switch to home screen and show success
     setCurrentScreen('home');
-    
-    // Auto-select the filter for the newly added dish
     setActiveFilters([selectedCourse]);
     
     Alert.alert('Success!', `${newDish.name} has been added to the menu!`);
@@ -250,32 +233,6 @@ export default function App() {
   const getTotalMenuItems = () => menuItems.length;
   const getOrderTotal = () => orderItems.reduce((total, item) => total + item.price, 0);
 
-  // Logo Component with Local Image
-  const Logo = () => (
-    <View style={styles.logoContainer}>
-      <Image 
-        source={require('./assets/logo=for-mast.webp')}
-        style={styles.logoImage}
-        resizeMode="cover"
-        onError={(error) => console.log('Logo image failed to load:', error)}
-      />
-      <Text style={styles.headerTitle}>ChrisCooks</Text>
-    </View>
-  );
-
-  // Chef Logo Component with Local Image
-  const ChefLogo = () => (
-    <View style={styles.logoContainer}>
-      <Image 
-        source={require('./assets/logo-for-mast.webp')}
-        style={styles.chefLogoImage}
-        resizeMode="cover"
-        onError={(error) => console.log('Chef logo image failed to load:', error)}
-      />
-      <Text style={styles.headerTitle}>Add New Dish</Text>
-    </View>
-  );
-
   // Filter Component
   const FilterBar = () => (
     <View style={styles.filterContainer}>
@@ -318,35 +275,14 @@ export default function App() {
     </View>
   );
 
-  // Course Section Component
-  const CourseSection = ({ course, items }: { course: Course; items: MenuItem[] }) => (
-    <View style={styles.courseSection}>
-      <View style={styles.courseHeader}>
-        <Text style={styles.courseTitle}>
-          {course === 'Starters' && '🍤 '}
-          {course === 'Main Dishes' && '🍖 '}
-          {course === 'Desserts' && '🍰 '}
-          {course === 'Beverages' && '🥤 '}
-          {course} ({items.length})
-        </Text>
-      </View>
-      {items.map((item) => (
-        <MenuItemComponent 
-          key={item.id} 
-          item={item} 
-          onAddToOrder={handleAddToOrder}
-          onRemoveFromOrder={handleRemoveFromOrder}
-          isInOrder={isItemInOrder(item.id)}
-        />
-      ))}
-    </View>
-  );
-
   // Home Screen
   const HomeScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Logo />
+        <View style={styles.logoContainer}>
+          <Text style={styles.logo}>🍽️</Text>
+          <Text style={styles.headerTitle}>ChrisCooks</Text>
+        </View>
         <Text style={styles.headerSubtitle}>Exquisite Dining Experience</Text>
       </View>
 
@@ -408,12 +344,13 @@ export default function App() {
               </TouchableOpacity>
             </View>
           ) : (
-            // Display items grouped by course
-            Object.entries(groupedMenuItems).map(([course, items]) => (
-              <CourseSection 
-                key={course} 
-                course={course as Course} 
-                items={items} 
+            filteredMenuItems.map((item) => (
+              <MenuItemComponent 
+                key={item.id} 
+                item={item} 
+                onAddToOrder={handleAddToOrder}
+                onRemoveFromOrder={handleRemoveFromOrder}
+                isInOrder={isItemInOrder(item.id)}
               />
             ))
           )}
@@ -432,7 +369,10 @@ export default function App() {
   const AddDishScreen = () => (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <ChefLogo />
+        <View style={styles.logoContainer}>
+          <Text style={styles.logo}>👨‍🍳</Text>
+          <Text style={styles.headerTitle}>Add New Dish</Text>
+        </View>
         <Text style={styles.headerSubtitle}>Craft Your Culinary Masterpiece</Text>
       </View>
 
@@ -575,7 +515,7 @@ export default function App() {
   );
 }
 
-// style sheet - Updated with Grouped Display
+// style sheet
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -604,23 +544,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  logoImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  logo: {
+    fontSize: 32,
     marginRight: 12,
-    borderWidth: 2,
-    borderColor: '#800000',
-    backgroundColor: 'white',
-  },
-  chefLogoImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: '#800000',
-    backgroundColor: 'white',
+    color: '#800000',
   },
   headerTitle: {
     fontSize: 28,
@@ -752,21 +679,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  // Course Section Styles
-  courseSection: {
-    marginBottom: 20,
-  },
-  courseHeader: {
-    marginBottom: 12,
-    paddingHorizontal: 8,
-  },
-  courseTitle: {
-    color: '#800000',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   emptyState: {
     alignItems: 'center',
     padding: 40,
@@ -882,6 +794,7 @@ const styles = StyleSheet.create({
   },
   coursePillText: {
     fontSize: 14,
+    color: 'white',
   },
   dishDescription: {
     color: '#CCCCCC',
