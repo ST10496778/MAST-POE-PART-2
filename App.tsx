@@ -151,7 +151,17 @@ export default function App() {
     }
   };
 
+  // Filter menu items based on active filters
   const filteredMenuItems = menuItems.filter(item => activeFilters.includes(item.course));
+
+  // Group items by course for better display
+  const groupedMenuItems = filteredMenuItems.reduce((acc, item) => {
+    if (!acc[item.course]) {
+      acc[item.course] = [];
+    }
+    acc[item.course].push(item);
+    return acc;
+  }, {} as Record<Course, MenuItem[]>);
 
   const handleAddDish = () => {
     if (!dishName.trim()) {
@@ -301,7 +311,34 @@ export default function App() {
       </View>
       <Text style={styles.filterResults}>
         Showing {filteredMenuItems.length} of {menuItems.length} items
+        {activeFilters.length > 0 && activeFilters.length < 4 && (
+          ` • ${activeFilters.join(', ')}`
+        )}
       </Text>
+    </View>
+  );
+
+  // Course Section Component
+  const CourseSection = ({ course, items }: { course: Course; items: MenuItem[] }) => (
+    <View style={styles.courseSection}>
+      <View style={styles.courseHeader}>
+        <Text style={styles.courseTitle}>
+          {course === 'Starters' && '🍤 '}
+          {course === 'Main Dishes' && '🍖 '}
+          {course === 'Desserts' && '🍰 '}
+          {course === 'Beverages' && '🥤 '}
+          {course} ({items.length})
+        </Text>
+      </View>
+      {items.map((item) => (
+        <MenuItemComponent 
+          key={item.id} 
+          item={item} 
+          onAddToOrder={handleAddToOrder}
+          onRemoveFromOrder={handleRemoveFromOrder}
+          isInOrder={isItemInOrder(item.id)}
+        />
+      ))}
     </View>
   );
 
@@ -359,19 +396,24 @@ export default function App() {
         <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
           {filteredMenuItems.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No items match your filters</Text>
+              <Text style={styles.emptyStateText}>No items match your current filters</Text>
+              <Text style={styles.emptyStateSubtext}>
+                {activeFilters.length === 0 
+                  ? 'Select at least one course type to see items' 
+                  : 'Try selecting different course types or adding new dishes'
+                }
+              </Text>
               <TouchableOpacity style={styles.emptyStateButton} onPress={selectAllFilters}>
                 <Text style={styles.emptyStateButtonText}>Show All Items</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            filteredMenuItems.map((item) => (
-              <MenuItemComponent 
-                key={item.id} 
-                item={item} 
-                onAddToOrder={handleAddToOrder}
-                onRemoveFromOrder={handleRemoveFromOrder}
-                isInOrder={isItemInOrder(item.id)}
+            // Display items grouped by course
+            Object.entries(groupedMenuItems).map(([course, items]) => (
+              <CourseSection 
+                key={course} 
+                course={course as Course} 
+                items={items} 
               />
             ))
           )}
@@ -533,7 +575,7 @@ export default function App() {
   );
 }
 
-// style sheet 
+// style sheet - Updated with Grouped Display
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -708,20 +750,49 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 12,
     textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  // Course Section Styles
+  courseSection: {
+    marginBottom: 20,
+  },
+  courseHeader: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  courseTitle: {
+    color: '#800000',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   emptyState: {
     alignItems: 'center',
     padding: 40,
+    backgroundColor: '#2D2D2D',
+    borderRadius: 12,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: '#404040',
   },
   emptyStateText: {
-    color: '#888',
+    color: 'white',
     fontSize: 16,
-    marginBottom: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   emptyStateButton: {
     backgroundColor: '#800000',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 8,
   },
   emptyStateButtonText: {
