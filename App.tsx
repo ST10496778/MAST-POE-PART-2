@@ -254,7 +254,7 @@ export default function App() {
   const Logo = () => (
     <View style={styles.logoContainer}>
       <Image 
-        source={require('./assets/logo-for-mast.webp')}
+        source={require('./assets/logo=for-mast.webp')}
         style={styles.logoImage}
         resizeMode="cover"
         onError={(error) => console.log('Logo image failed to load:', error)}
