@@ -33,9 +33,9 @@ const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }:
       </View>
     </View>
     <Text style={styles.dishDescription}>{item.description}</Text>
-    <View style={styles.itemFooter}>
-      <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-      <View style={styles.buttonContainer}>
+      <View style={styles.itemFooter}>
+        <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
+          <View style={styles.buttonContainer}>
         {isInOrder && (
           <TouchableOpacity 
             style={[styles.actionButton, styles.removeButton]} 
