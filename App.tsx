@@ -14,7 +14,12 @@ interface MenuItem {
 }
 
 // MenuItem Component 
-const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrder: (item: MenuItem) => void }) => (
+const MenuItemComponent = ({ item, onAddToOrder, onRemoveFromOrder, isInOrder }: { 
+  item: MenuItem; 
+  onAddToOrder: (item: MenuItem) => void;
+  onRemoveFromOrder: (itemId: string) => void;
+  isInOrder: boolean;
+}) => (
   <View style={styles.menuItem}>
     <View style={styles.dishHeader}>
       <Text style={styles.dishName}>{item.name}</Text>
@@ -30,9 +35,22 @@ const MenuItemComponent = ({ item, onAddToOrder }: { item: MenuItem; onAddToOrde
     <Text style={styles.dishDescription}>{item.description}</Text>
     <View style={styles.itemFooter}>
       <Text style={styles.dishPrice}>R{item.price.toFixed(2)}</Text>
-      <TouchableOpacity style={styles.addButton} onPress={() => onAddToOrder(item)}>
-        <Text style={styles.addButtonText}>➕ Add to Order</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        {isInOrder && (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.removeButton]} 
+            onPress={() => onRemoveFromOrder(item.id)}
+          >
+            <Text style={styles.actionButtonText}>➖ Remove</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.addButton]} 
+          onPress={() => onAddToOrder(item)}
+        >
+          <Text style={styles.actionButtonText}>➕ Add</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   </View>
 );
@@ -149,6 +167,25 @@ export default function App() {
     Alert.alert('Added!', `${item.name} added to your order!`);
   };
 
+  const handleRemoveFromOrder = (itemId: string) => {
+    const itemIndex = orderItems.findIndex(item => item.id === itemId);
+    if (itemIndex > -1) {
+      const updatedOrder = [...orderItems];
+      const removedItem = updatedOrder.splice(itemIndex, 1)[0];
+      setOrderItems(updatedOrder);
+      Alert.alert('Removed!', `${removedItem.name} removed from your order!`);
+    }
+  };
+
+  const handleRemoveAllFromOrder = () => {
+    if (orderItems.length === 0) {
+      Alert.alert('Oops!', 'No items in your order to remove.');
+      return;
+    }
+    setOrderItems([]);
+    Alert.alert('Cleared!', 'All items removed from your order!');
+  };
+
   const handleAddAllToOrder = () => {
     if (menuItems.length === 0) {
       Alert.alert('Oops!', 'No menu items to add.');
@@ -156,6 +193,10 @@ export default function App() {
     }
     setOrderItems([...orderItems, ...menuItems]);
     Alert.alert('Awesome!', `All ${menuItems.length} items added to your order!`);
+  };
+
+  const isItemInOrder = (itemId: string) => {
+    return orderItems.some(item => item.id === itemId);
   };
 
   const getTotalMenuItems = () => menuItems.length;
@@ -178,20 +219,40 @@ export default function App() {
             <Text style={styles.orderSummaryText}>
               🛒 Order: {orderItems.length} items | Total: R{getOrderTotal().toFixed(2)}
             </Text>
+            <TouchableOpacity 
+              style={styles.removeAllButton} 
+              onPress={handleRemoveAllFromOrder}
+            >
+              <Text style={styles.removeAllButtonText}>🗑️ Clear Order</Text>
+            </TouchableOpacity>
           </View>
         )}
 
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>🎯 Total Menu Items: {getTotalMenuItems()}</Text>
+          <Text style={styles.orderTotalText}>🛒 Current Order: {orderItems.length} items</Text>
         </View>
 
-        <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllToOrder}>
-          <Text style={styles.addAllButtonText}>🛒 Add All to Order</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllToOrder}>
+            <Text style={styles.addAllButtonText}>🛒 Add All</Text>
+          </TouchableOpacity>
+          {orderItems.length > 0 && (
+            <TouchableOpacity style={styles.removeAllButtonSmall} onPress={handleRemoveAllFromOrder}>
+              <Text style={styles.removeAllButtonText}>🗑️ Clear All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <ScrollView style={styles.menuContainer} showsVerticalScrollIndicator={false}>
           {menuItems.map((item) => (
-            <MenuItemComponent key={item.id} item={item} onAddToOrder={handleAddToOrder} />
+            <MenuItemComponent 
+              key={item.id} 
+              item={item} 
+              onAddToOrder={handleAddToOrder}
+              onRemoveFromOrder={handleRemoveFromOrder}
+              isInOrder={isItemInOrder(item.id)}
+            />
           ))}
         </ScrollView>
       </View>
@@ -225,7 +286,9 @@ export default function App() {
               placeholderTextColor="#A8A8A8"
               value={dishName}
               onChangeText={setDishName}
+              maxLength={50}
             />
+            <Text style={styles.charCount}>{dishName.length}/50</Text>
           </View>
 
           <View style={styles.inputCard}>
@@ -239,7 +302,9 @@ export default function App() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+              maxLength={200}
             />
+            <Text style={styles.charCount}>{dishDescription.length}/200</Text>
           </View>
 
           <View style={styles.inputCard}>
@@ -267,22 +332,50 @@ export default function App() {
 
           <View style={styles.inputCard}>
             <Text style={styles.label}>💰 Price</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="How much for this delight?"
-              placeholderTextColor="#A8A8A8"
-              value={dishPrice}
-              onChangeText={setDishPrice}
-              keyboardType="decimal-pad"
-            />
+            <View style={styles.priceContainer}>
+              <Text style={styles.currencySymbol}>R</Text>
+              <TextInput
+                style={[styles.input, styles.priceInput]}
+                placeholder="0.00"
+                placeholderTextColor="#A8A8A8"
+                value={dishPrice}
+                onChangeText={setDishPrice}
+                keyboardType="decimal-pad"
+              />
+            </View>
+            {dishPrice && !isNaN(parseFloat(dishPrice)) && parseFloat(dishPrice) > 0 && (
+              <Text style={styles.pricePreview}>
+                Price: R{parseFloat(dishPrice).toFixed(2)}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.formSummary}>
+            <Text style={styles.formSummaryTitle}>Dish Summary:</Text>
+            <Text style={styles.formSummaryText}>
+              {dishName || 'No name'} • {selectedCourse} • {dishPrice ? `R${parseFloat(dishPrice).toFixed(2)}` : 'No price'}
+            </Text>
           </View>
 
           <View style={styles.buttonGroup}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleAddDish}>
+            <TouchableOpacity 
+              style={[
+                styles.saveButton, 
+                (!dishName.trim() || !dishDescription.trim() || !dishPrice.trim()) && styles.saveButtonDisabled
+              ]} 
+              onPress={handleAddDish}
+              disabled={!dishName.trim() || !dishDescription.trim() || !dishPrice.trim()}
+            >
               <Text style={styles.saveButtonText}>💾 Save Dish</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={() => setCurrentScreen('home')}>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => {
+              setDishName('');
+              setDishDescription('');
+              setSelectedCourse('Starters');
+              setDishPrice('');
+              setCurrentScreen('home');
+            }}>
               <Text style={styles.cancelButtonText}>❌ Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -350,12 +443,14 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 15,
     marginBottom: 15,
+    alignItems: 'center',
   },
   orderSummaryText: {
     color: '#8B4513',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 10,
   },
   totalContainer: {
     backgroundColor: '#A6E3E9',
@@ -368,17 +463,47 @@ const styles = StyleSheet.create({
     color: '#2D5D7B',
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  orderTotalText: {
+    color: '#2D5D7B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 10,
   },
   addAllButton: {
     backgroundColor: '#FFD700',
     borderRadius: 25,
-    padding: 18,
+    padding: 15,
     alignItems: 'center',
-    marginBottom: 20,
+    flex: 1,
   },
   addAllButtonText: {
     color: '#8B4513',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  removeAllButton: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: 15,
+    padding: 10,
+    paddingHorizontal: 20,
+  },
+  removeAllButtonSmall: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: 25,
+    padding: 15,
+    alignItems: 'center',
+    flex: 1,
+  },
+  removeAllButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   menuContainer: {
@@ -413,7 +538,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-
   },
   dishName: {
     fontSize: 18,
@@ -449,16 +573,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF69B4',
   },
-  addButton: {
-    backgroundColor: '#FF85A2',
-    paddingHorizontal: 20,
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  actionButton: {
+    paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
   },
-  addButtonText: {
+  addButton: {
+    backgroundColor: '#FF85A2',
+  },
+  removeButton: {
+    backgroundColor: '#FF6B6B',
+  },
+  actionButtonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 12,
   },
   formContainer: {
     flex: 1,
@@ -488,6 +621,12 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: 'top',
   },
+  charCount: {
+    textAlign: 'right',
+    fontSize: 12,
+    color: '#999',
+    marginTop: 5,
+  },
   courseContainer: {
     marginTop: 5,
   },
@@ -512,6 +651,41 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currencySymbol: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FF85A2',
+    marginRight: 10,
+  },
+  priceInput: {
+    flex: 1,
+  },
+  pricePreview: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  formSummary: {
+    backgroundColor: 'rgba(255, 133, 162, 0.1)',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+  },
+  formSummaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF85A2',
+    marginBottom: 5,
+  },
+  formSummaryText: {
+    fontSize: 14,
+    color: '#666',
+  },
   buttonGroup: {
     marginTop: 10,
   },
@@ -521,6 +695,10 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginBottom: 12,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#FFB6C1',
+    opacity: 0.6,
   },
   saveButtonText: {
     color: 'white',
